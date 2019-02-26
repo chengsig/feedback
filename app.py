@@ -34,15 +34,19 @@ def register_user():
     """register user: produce form & handle form submission"""
 
     form = RegisterForm()
-
+    print(form.validate_on_submit(), form.errors)
     if form.validate_on_submit():
         username = form.username.data
-        password =
+        password = form.password.data
         email = form.email.data
         first_name = form.first_name.data
         last_name = form.last_name.data
-
-
+        print(last_name)
+        new_user = User.register(username, password, 
+                                email, first_name, last_name)
+        db.session.add(new_user)
+        db.session.commit()
+        return redirect('/secret')
 
     else:
         return render_template('register_form.html', form=form)
