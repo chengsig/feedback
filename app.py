@@ -1,11 +1,9 @@
-from flask import Flask, redirect, render_template, flash
+from flask import Flask, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 
 from models import db, connect_db, User
 #from forms import NewSongForPlaylistForm, SongForm, PlaylistForm
-#import bcrypt
-from flask_bcrypt import Bcrypt
-from form import RegisterForm
+from form import RegisterForm, LoginForm
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///feedback-app'
@@ -34,19 +32,57 @@ def register_user():
     """register user: produce form & handle form submission"""
 
     form = RegisterForm()
-    print(form.validate_on_submit(), form.errors)
+
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
         email = form.email.data
         first_name = form.first_name.data
         last_name = form.last_name.data
-        print(last_name)
-        new_user = User.register(username, password, 
+
+        new_user = User.register(username, password,
                                 email, first_name, last_name)
         db.session.add(new_user)
         db.session.commit()
+
+        session["user_id"] = new_user.username
+
+        flash("Registered!")
         return redirect('/secret')
 
     else:
         return render_template('register_form.html', form=form)
+
+@app.route('/secret')
+def show_secret():
+    """shows the secret page"""
+
+    if "user_id" not in session:
+        return redirect('/login')
+
+
+    return "You made it!"
+
+@app.route('/login', methods=["GET", "POST"])
+def login_user():
+    """login user: produce form & handle form submission"""
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        user = User.authenticate(username, password)
+
+        if user:
+            session["user_id"] = user.username
+            flash("Logged in!")
+            return redirect('/secret')
+        else:
+            flash("Invalid username/password")
+            return redirect('/login')
+
+    else:
+        return render_template('login_form.html', form=form)
+
