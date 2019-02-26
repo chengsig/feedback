@@ -37,7 +37,12 @@ def register_user():
 
     if form.validate_on_submit():
         username = form.username.data
-        # password =
+        password =
+        email = form.email.data
+        first_name = form.first_name.data
+        last_name = form.last_name.data
+
+
 
     else:
         return render_template('register_form.html', form=form)
