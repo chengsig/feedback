@@ -1,7 +1,7 @@
 from flask import Flask, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 
-from models import db, connect_db, User
+from models import db, connect_db, User, Feedback
 #from forms import NewSongForPlaylistForm, SongForm, PlaylistForm
 from form import RegisterForm, LoginForm
 
@@ -96,5 +96,24 @@ def logout_user():
 @app.route('/users/<username>')
 def display_user_detail(username):
     """display a user's detailed information when logged in"""
+
+    if "user_id" not in session:
+        return redirect('/login')
+
     user = User.query.get(username)
     return render_template('user_details.html', user=user)
+
+@app.route('/users/<username>/delete', methods=["POST"])
+def delete_user(username):
+    """delete user"""
+
+    if "user_id" not in session:
+        return redirect('/login')
+
+    session.pop("user_id")
+
+    user = User.query.get(username)
+    db.session.delete(user)
+    db.session.commit()
+
+    return redirect('/')
