@@ -48,7 +48,7 @@ def register_user():
         session["user_id"] = new_user.username
 
         flash("Registered!")
-        return redirect('/secret')
+        return redirect(f'/users/{username}')
 
     else:
         return render_template('register_form.html', form=form)
@@ -78,7 +78,7 @@ def login_user():
         if user:
             session["user_id"] = user.username
             flash("Logged in!")
-            return redirect('/secret')
+            return redirect(f'/users/{username}')
         else:
             flash("Invalid username/password")
             return redirect('/login')
@@ -86,3 +86,15 @@ def login_user():
     else:
         return render_template('login_form.html', form=form)
 
+@app.route('/logout')
+def logout_user():
+    """ logout user from current session and redirect to '/' """
+
+    session.pop("user_id")
+    return redirect('/')
+
+@app.route('/users/<username>')
+def display_user_detail(username):
+    """display a user's detailed information when logged in"""
+    user = User.query.get(username)
+    return render_template('user_details.html', user=user)
