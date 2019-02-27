@@ -32,6 +32,9 @@ def redirect_to_register():
 def register_user():
     """register user: produce form & handle form submission"""
 
+    if "user_id" in session:
+        return redirect(f'/users/{session.get("user_id")}')
+    
     form = RegisterForm()
 
     if form.validate_on_submit():
@@ -44,7 +47,6 @@ def register_user():
         new_user = User.register(username, password,
                                 email, first_name, last_name)
         db.session.add(new_user)
-        # db.session.commit()
 
         try:
             db.session.commit()
@@ -73,6 +75,9 @@ def show_secret():
 @app.route('/login', methods=["GET", "POST"])
 def login_user():
     """login user: produce form & handle form submission"""
+    #redirect user to their own page if already logged in
+    if "user_id" in session:
+        return redirect(f'/users/{session.get("user_id")}')
 
     form = LoginForm()
 
@@ -114,9 +119,9 @@ def display_user_detail(username):
 def delete_user(username):
     """delete user"""
 
-    if ("user_id" not in session):
+    if "user_id" not in session:
         return redirect('/login')
-    elif(username != session.get('user_id')):
+    elif username != session.get('user_id'):
         flash("You can't delete other user!!!")
         return redirect(f'/users/{session.get("user_id")}')
 
@@ -156,9 +161,9 @@ def add_feedback(username):
 def update_feedback(feedback_id):
     """update a user's feedback"""
     feedback = Feedback.query.get_or_404(feedback_id)
-    if ("user_id" not in session):
+    if "user_id" not in session:
         return redirect('/login')
-    elif(feedback.user.username != session.get('user_id')):
+    elif feedback.user.username != session.get('user_id'):
         flash("You can't delete feedback that doesn't belong to you")
         return redirect(f'/users/{session.get("user_id")}')
 
@@ -181,9 +186,9 @@ def delete_feedback(feedback_id):
     """delet the feedback if user is the author of the feedback"""
 
     feedback = Feedback.query.get_or_404(feedback_id)
-    if ("user_id" not in session):
+    if "user_id" not in session:
         return redirect('/login')
-    elif(feedback.user.username != session.get('user_id')):
+    elif feedback.user.username != session.get('user_id'):
         flash("You can't delete feedback that doesn't belong to you")
         return redirect(f'/users/{session.get("user_id")}')
 
