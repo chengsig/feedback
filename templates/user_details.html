@@ -13,7 +13,7 @@
     <p>Feedbacks:</p>
     {% for feedback in user.feedbacks %}
     <div>
-        <div>Title: <a href="/feedback/{{feedback.id}}/update">{{ feedback.title }}</a></div>
+        <div>Title: {{ feedback.title }} <a href="/feedback/{{feedback.id}}/update"><--Edit</a></div>
         <div>Content: {{ feedback.content }}</div>
         <form action="/feedback/{{feedback.id}}/delete" method="POST">
             <button class="btn btn-danger">Delete feedback!</button>

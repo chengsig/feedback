@@ -1,5 +1,6 @@
 from flask import Flask, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
+from sqlalchemy.exc import IntegrityError
 
 from models import db, connect_db, User, Feedback
 #from forms import NewSongForPlaylistForm, SongForm, PlaylistForm
@@ -43,7 +44,13 @@ def register_user():
         new_user = User.register(username, password,
                                 email, first_name, last_name)
         db.session.add(new_user)
-        db.session.commit()
+        # db.session.commit()
+
+        try:
+            db.session.commit()
+        except IntegrityError:
+            flash("Username already exist! Please try to login")
+            return redirect(f'/login')
 
         session["user_id"] = new_user.username
 
@@ -107,8 +114,11 @@ def display_user_detail(username):
 def delete_user(username):
     """delete user"""
 
-    if "user_id" not in session:
+    if ("user_id" not in session):
         return redirect('/login')
+    elif(username != session.get('user_id')):
+        flash("You can't delete other user!!!")
+        return redirect(f'/users/{session.get("user_id")}')
 
     session.pop("user_id")
 
@@ -130,7 +140,7 @@ def add_feedback(username):
         title = form.title.data
         content = form.content.data
 
-        feedback = Feedback(title=title, 
+        feedback = Feedback(title=title,
                             content=content, username=username)
 
         db.session.add(feedback)
@@ -146,8 +156,11 @@ def add_feedback(username):
 def update_feedback(feedback_id):
     """update a user's feedback"""
     feedback = Feedback.query.get_or_404(feedback_id)
-    if (("user_id" not in session) and (feedback.user.username != session.get('user_id'))): 
+    if ("user_id" not in session):
         return redirect('/login')
+    elif(feedback.user.username != session.get('user_id')):
+        flash("You can't delete feedback that doesn't belong to you")
+        return redirect(f'/users/{session.get("user_id")}')
 
     form = FeedbackForm(obj=feedback)
 
@@ -162,3 +175,22 @@ def update_feedback(feedback_id):
 
     else:
         return render_template('update_feedback.html', form=form, feedback_id=feedback_id)
+
+@app.route('/feedback/<feedback_id>/delete', methods=["POST"])
+def delete_feedback(feedback_id):
+    """delet the feedback if user is the author of the feedback"""
+
+    feedback = Feedback.query.get_or_404(feedback_id)
+    if ("user_id" not in session):
+        return redirect('/login')
+    elif(feedback.user.username != session.get('user_id')):
+        flash("You can't delete feedback that doesn't belong to you")
+        return redirect(f'/users/{session.get("user_id")}')
+
+
+    db.session.delete(feedback)
+    db.session.commit()
+
+    flash("feedback deleted!")
+    return redirect(f'/users/{session.get("user_id")}')
+
